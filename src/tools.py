@@ -194,11 +194,12 @@ def get_openai_message(content):
 
 
 def check_java_version():
-    java_home = os.environ.get('JAVA_HOME')
-    if 'jdk-17' in java_home:
-        return 17
-    elif 'jdk-11' in java_home:
-        return 11
+    return 11
+    # java_home = os.environ.get('JAVA_HOME')
+    # if 'jdk-17' in java_home:
+    #     return 17
+    # elif 'jdk-11' in java_home:
+    #     return 11
 
 
 def repair_package(code, package_info):
