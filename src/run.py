@@ -42,7 +42,9 @@ def run():
 
     # Export data for multi-process
     export_data()
-
+    # 3 files genrated : 1. 1 class with one method each from the original class 
+    # 2. 1 direction 3 class with function called focal_method
+    # 3. 1 raw file 
     project_name = os.path.basename(os.path.normpath(project_dir))
 
     # Modify SQL query to test the designated classes.
@@ -59,7 +61,7 @@ def run():
 
 if __name__ == '__main__':
     print("Make sure the config.ini is correctly configured.")
-    seconds = 5
+    seconds = 1
     while seconds > 0:
         print(seconds)
         time.sleep(1)  # Pause for 1 second

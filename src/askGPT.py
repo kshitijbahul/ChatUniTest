@@ -3,6 +3,8 @@ import os.path
 import time
 import openai
 from tools import *
+from openai import OpenAI
+import traceback
 import random
 import concurrent.futures
 import javalang
@@ -26,25 +28,39 @@ def ask_chatgpt(messages, save_path):
     # Max prompt token exceeded, no need to send request.
     if get_messages_tokens(messages) > MAX_PROMPT_TOKENS:
         return False
-    openai.api_key = random.choice(api_keys)
+    
+    #openai.api_key = random.choice(api_keys)
     # Retry 5 times when error occurs
     max_try = 5
     while max_try:
         try:
-            completion = openai.ChatCompletion.create(messages=messages,
+            client = OpenAI(
+                base_url='http://localhost:11434/v1',
+                api_key='ollama',
+            )
+            """ completion = openai.ChatCompletion.create(messages=messages,
+                                                      model=model,
+                                                      temperature=temperature,
+                                                      top_p=top_p,
+                                                      frequency_penalty=frequency_penalty,
+                                                      presence_penalty=presence_penalty) """
+            completion = client.chat.completions.create(messages=messages,
                                                       model=model,
                                                       temperature=temperature,
                                                       top_p=top_p,
                                                       frequency_penalty=frequency_penalty,
                                                       presence_penalty=presence_penalty)
             with open(save_path, "w") as f:
-                json.dump(completion, f)
+                print("Response from GPT is "+str(completion.json()))
+                #print("Response with Java Class is  "+str(completion))
+                json.loads(completion.json())
+                json.dump(completion.json(), f)
             return True
         except Exception as e:
             print(Fore.RED + str(e), Style.RESET_ALL)
             if "This model's maximum context length is 4097 tokens." in str(e):
                 break
-            time.sleep(10)
+            #time.sleep(10)
             # If rate limit reached we wait a random sleep time
             if "Rate limit reached" in str(e):
                 sleep_time = random.randint(60, 120)
@@ -478,14 +494,14 @@ def whole_process(test_num, base_name, base_dir, repair, submits, total):
 
             with open(gpt_file_name, "r") as f:
                 gpt_result = json.load(f)
-
+                print("The GPT result is "+str(gpt_result))
             # 2. Extract information from GPT, and RUN save the result
             steps += 1
-
+            gpt_result_json = json.loads(gpt_result)
             raw_file_name = os.path.join(save_dir, str(steps) + "_raw_" + str(rounds) + ".json")
-
             # extract the test and save the result in raw_file_name
-            input_string = gpt_result["choices"][0]['message']["content"]
+            print(gpt_result_json["choices"])
+            input_string = gpt_result_json["choices"][0]['message']["content"]
             test_passed, fatal_error = extract_and_run(input_string, raw_file_name, class_name, method_id, test_num,
                                                        project_name,
                                                        package)
@@ -532,6 +548,8 @@ def whole_process(test_num, base_name, base_dir, repair, submits, total):
             if not repair:  # If we do not want to repair the code, we don't need to second round
                 break
     except Exception as e:
+        print(e)
+        traceback.print_exc()
         print(progress, Fore.RED + str(e), Style.RESET_ALL)
     if os.path.exists(run_temp_dir):
         run_temp_dir = os.path.abspath(run_temp_dir)
